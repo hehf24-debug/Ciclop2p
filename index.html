@@ -40,8 +40,41 @@
   
   .exch{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:12px;background:#141720;position:relative;}
   .exch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
-  .exch input.nm{background:transparent;border:none;border-bottom:1px dashed var(--mut);border-radius:0;padding:4px 0;font-weight:600;color:#c9cfdb;width:60%;font-size:.9rem;}
-  .exch input.nm:focus{border-bottom-color:var(--acc);}
+  
+  /* ESTILOS DEL MENÚ DESPLEGABLE DE EXCHANGES */
+  .exch select.nm-select {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--mut);
+    border-radius: 0;
+    padding: 4px 0;
+    font-weight: 600;
+    color: #c9cfdb;
+    width: 70%;
+    font-size: .95rem;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+  .exch select.nm-select:focus { border-bottom-color: var(--acc); }
+  .exch select.nm-select option { background: #181b22; color: white; font-size: 1rem; }
+  
+  .nm-custom {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--acc);
+    border-radius: 0;
+    padding: 4px 0;
+    font-weight: 600;
+    color: #fff;
+    width: 100%;
+    font-size: .95rem;
+    margin-bottom: 10px;
+    outline: none;
+  }
+  
   .btn-remove{background:none;border:none;color:var(--bad);font-size:1.2rem;cursor:pointer;padding:0 5px;}
   
   .toggle{display:flex;gap:6px;margin-bottom:12px;}
@@ -116,7 +149,7 @@
   <div class="card">
     <h2>Tus Exchanges (Bs por USDT)</h2>
     <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas de Binance (Beta)</button>
-    <p class="hint">💡 Escribe el nombre de <b>cualquier</b> exchange y sus tasas. El botón verde solo intenta traer Binance automáticamente.</p>
+    <p class="hint">💡 Selecciona tu exchange de la lista y escribe las tasas que ves en tu app en este momento.</p>
     <div id="exchs"></div>
     <button class="btn btn-add" id="addExchBtn">+ Añadir otro exchange</button>
   </div>
@@ -139,33 +172,60 @@
     </a>
   </div>
 
-  <!-- AÑADIDO INDICADOR DE VERSIÓN VISUAL -->
-  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v9.1)</span> · <a href="#" id="share">Compartir app</a></footer>
+  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v11)</span> · <a href="#" id="share">Compartir app</a></footer>
 </div>
 
 <script>
-const KEY = "ciclop2p_v10"; 
+const KEY = "ciclop2p_v11"; 
+
+// LISTA DE EXCHANGES POPULARES
+const EXCHANGES_POPULARES = [
+  "Binance", "Bitget", "Bybit", "OKX", "BingX", "MEXC", "KuCoin", "El Dorado", "Syklo", "Reserve", "Otro"
+];
 
 let EX = [
-  { n: "Exchange 1", c: "", v: "" },
-  { n: "Exchange 2", c: "", v: "" }
+  { n: "Binance", c: "", v: "" },
+  { n: "Bitget", c: "", v: "" }
 ];
 let mode = "usdt";
 let isPro = false; 
 const $ = id => document.getElementById(id);
 
 function renderEx(){
-  $("exchs").innerHTML = EX.map((e,i)=>`
+  $("exchs").innerHTML = EX.map((e,i)=>{
+    // Verificamos si el exchange actual está en la lista o es personalizado
+    const isCustom = !EXCHANGES_POPULARES.includes(e.n) || e.n === "Otro";
+    const selectValue = isCustom ? "Otro" : e.n;
+    
+    return `
     <div class="exch">
       <div class="exch-header">
-        <input type="text" class="nm" value="${e.n}" placeholder="Nombre (Ej: Binance)" oninput="EX[${i}].n=this.value; save(); calc();">
+        <select class="nm-select" onchange="updateExName(${i}, this.value)">
+          ${EXCHANGES_POPULARES.map(opt => `<option value="${opt}" ${opt === selectValue ? 'selected' : ''}>${opt}</option>`).join('')}
+        </select>
         ${EX.length > 2 ? `<button class="btn-remove" onclick="removeExchange(${i})">✕</button>` : ''}
       </div>
+      
+      ${isCustom ? `<input type="text" class="nm-custom" value="${e.n === 'Otro' ? '' : e.n}" placeholder="Escribe el nombre..." oninput="EX[${i}].n=this.value; save(); calc();">` : ''}
+      
       <div class="grid g2">
         <div><label>Compra (pagas)</label><input type="number" step="any" inputmode="decimal" value="${e.c || ''}" placeholder="Ej: 1038.5" oninput="EX[${i}].c=+this.value; save(); calc();"></div>
         <div><label>Venta (recibes)</label><input type="number" step="any" inputmode="decimal" value="${e.v || ''}" placeholder="Ej: 1033" oninput="EX[${i}].v=+this.value; save(); calc();"></div>
       </div>
-    </div>`).join("");
+    </div>`
+  }).join("");
+}
+
+// Actualizar el nombre cuando se selecciona del menú
+function updateExName(index, value) {
+  if (value === "Otro") {
+    EX[index].n = ""; // Se vacía para que el usuario escriba
+  } else {
+    EX[index].n = value;
+  }
+  save();
+  renderEx(); // Volvemos a dibujar para mostrar u ocultar el campo de texto
+  calc();
 }
 
 async function fetchBinanceRates() {
@@ -236,7 +296,7 @@ function addExchange() {
     }
   }
   if (EX.length >= 5) { alert("Máximo 5 exchanges."); return; }
-  EX.push({ n: "Nuevo Exchange", c: "", v: "" });
+  EX.push({ n: "Otro", c: "", v: "" });
   renderEx(); save(); calc();
 }
 
@@ -298,7 +358,7 @@ function calc(){
   const cap=+$("cap").value, fee=+$("fee").value, target=+$("target").value, mins=+$("mins").value;
   const out=$("out"); save();
   
-  const validEX = EX.filter(e => e.c > 0 && e.v > 0);
+  const validEX = EX.filter(e => e.c > 0 && e.v > 0 && e.n.trim() !== "");
 
   if(!(cap>0)){
     out.innerHTML='<div class="card"><div class="warn">Por favor, ingresa tu capital inicial arriba para empezar.</div></div>';
@@ -313,11 +373,11 @@ function calc(){
   for(let i=0;i<validEX.length;i++)for(let j=0;j<validEX.length;j++){
     if(i===j)continue;
     const f=validEX[j].v/validEX[i].c;
-    routes.push({buy:validEX[i].n || `Exchange ${i+1}`,sell:validEX[j].n || `Exchange ${j+1}`,f,margin:(f-1)*100});
+    routes.push({buy:validEX[i].n, sell:validEX[j].n, f, margin:(f-1)*100});
   }
   routes.sort((a,b)=>b.f-a.f);
   const best=routes[0];
-  const bestSellObj = validEX.find(e => (e.n || `Exchange ${validEX.indexOf(e)+1}`) === best.sell);
+  const bestSellObj = validEX.find(e => e.n === best.sell);
   const realSellPrice = bestSellObj ? bestSellObj.v : validEX[1].v;
 
   const netFactor=(x,isBs)=> isBs ? x*best.f - fee*realSellPrice : x*best.f - fee;
