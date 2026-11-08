@@ -67,7 +67,8 @@
 <body>
 <div class="wrap">
   <div class="brand">
-    <img src="./logo.png" alt="Logo">
+    <!-- Si el logo sale roto, verifica que se llame logo.png en GitHub -->
+    <img src="./logo.png" alt="CicloP2P">
     <div>
       <div class="bname">CicloP2P</div>
       <div class="btag">Arbitraje Universal</div>
@@ -120,12 +121,12 @@
 </div>
 
 <script>
-const KEY = "ciclop2p_v5"; 
+const KEY = "ciclop2p_v6"; 
 
-// INICIALIZACIÓN LIMPIA: Valores vacíos y nombres genéricos
+// Inicialización limpia
 let EX = [
-  { n: "Exchange 1", c: "", v: "" },
-  { n: "Exchange 2", c: "", v: "" }
+  { n: "Binance", c: "", v: "" },
+  { n: "Bitget", c: "", v: "" }
 ];
 let mode = "usdt";
 let isPro = false; 
@@ -145,20 +146,21 @@ function renderEx(){
     </div>`).join("");
 }
 
-// FUNCIÓN MÁGICA: Traer tasas de Binance P2P con doble proxy de respaldo
+// FUNCIÓN MÁGICA CORREGIDA
 async function fetchBinanceRates() {
   const btn = $("autoBtn");
   const originalText = btn.innerHTML;
   btn.innerHTML = "⏳ Buscando...";
   btn.disabled = true;
 
-  // Probamos con dos proxys diferentes por si uno falla
+  // Proxies de respaldo
   const proxies = [
-    "https://api.allorigins.win/raw?url=",
-    "https://corsproxy.io/?"
+    "https://corsproxy.io/?",
+    "https://api.allorigins.win/raw?url="
   ];
 
   let success = false;
+  let errorMsg = "";
 
   for (let proxy of proxies) {
     try {
@@ -173,38 +175,45 @@ async function fetchBinanceRates() {
       const dataCompra = await resCompra.json();
       const dataVenta = await resVenta.json();
 
-      let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
-      if (bIndex === -1) {
-        if(EX.length >= 2 && !isPro) { 
-          alert("No tienes casilla de Binance y estás en el límite gratis. Añade una casilla manualmente o hazte Pro."); 
-          btn.innerHTML = originalText; btn.disabled = false;
-          return; 
+      // Verificación estricta: ¿Binance devolvió los datos?
+      if (dataCompra && dataCompra.data && dataCompra.data.length > 0 && dataVenta && dataVenta.data && dataVenta.data.length > 0) {
+        
+        // Buscamos si el usuario ya tiene una casilla llamada Binance
+        let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
+        
+        // Si no tiene, la creamos (respetando el límite de 2)
+        if (bIndex === -1) {
+          if(EX.length >= 2 && !isPro) { 
+            alert("No tienes casilla de Binance y estás en el límite gratis. Añade una casilla manualmente o escribe 'Binance' en una de las que tienes."); 
+            btn.innerHTML = originalText; btn.disabled = false;
+            return; 
+          }
+          EX.push({ n: "Binance", c: "", v: "" });
+          bIndex = EX.length - 1;
         }
-        EX.push({ n: "Binance", c: "", v: "" });
-        bIndex = EX.length - 1;
-      }
 
-      if (dataCompra.data && dataCompra.data.length > 0) {
+        // Llenamos los valores
         EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
-      }
-      if (dataVenta.data && dataVenta.data.length > 0) {
         EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
+        
+        success = true;
+        break; 
+      } else {
+        errorMsg = "Binance no devolvió datos válidos en este intento.";
       }
-
-      success = true;
-      break; // Si tuvo éxito, salimos del bucle de proxies
     } catch (error) {
-      console.log("Falló el proxy, intentando el siguiente...");
+      errorMsg = error.message;
+      console.log("Falló el proxy:", proxy, error);
     }
   }
 
   if (success) {
-    renderEx();
+    renderEx(); // Actualiza la pantalla
     save();
     calc();
-    alert("✅ Tasas de Binance P2P actualizadas con éxito.");
+    alert("✅ Tasas de Binance P2P extraídas y colocadas en la casilla.");
   } else {
-    alert("⚠️ Los servidores de Binance están bloqueando la conexión en este momento. Por favor, ingresa los precios manualmente.");
+    alert("⚠️ Error real: No se pudo conectar con Binance P2P.\nDetalle: " + errorMsg + "\n\nPor favor, ingresa los precios a mano.");
   }
   
   btn.innerHTML = originalText;
@@ -274,7 +283,6 @@ function calc(){
   const cap=+$("cap").value, fee=+$("fee").value, target=+$("target").value, mins=+$("mins").value;
   const out=$("out"); save();
   
-  // Filtramos solo los que tienen datos reales
   const validEX = EX.filter(e => e.c > 0 && e.v > 0);
 
   if(!(cap>0)){
