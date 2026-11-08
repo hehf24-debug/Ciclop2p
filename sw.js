@@ -1,4 +1,4 @@
-const CACHE = "ciclop2p-v3";
+const CACHE = "ciclop2p-v4";
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon.svg"];
 
 self.addEventListener("install", e => {
