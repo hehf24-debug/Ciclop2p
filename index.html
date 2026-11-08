@@ -139,11 +139,12 @@
     </a>
   </div>
 
-  <footer>Hecho por <b>CicloP2P</b> · <a href="#" id="share">Compartir app</a></footer>
+  <!-- AÑADIDO INDICADOR DE VERSIÓN VISUAL -->
+  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v9.1)</span> · <a href="#" id="share">Compartir app</a></footer>
 </div>
 
 <script>
-const KEY = "ciclop2p_v9"; 
+const KEY = "ciclop2p_v10"; 
 
 let EX = [
   { n: "Exchange 1", c: "", v: "" },
@@ -167,21 +168,18 @@ function renderEx(){
     </div>`).join("");
 }
 
-// FUNCIÓN ACTUALIZADA CON NUEVOS PROXIES MÁS ESTABLES
 async function fetchBinanceRates() {
   const btn = $("autoBtn");
   const originalText = btn.innerHTML;
   btn.innerHTML = "⏳ Buscando...";
   btn.disabled = true;
 
-  // Codetabs y AllOrigins son más estables para APIs que Corsproxy
   const proxies = [
     "https://api.codetabs.com/v1/proxy?quest=",
     "https://api.allorigins.win/raw?url="
   ];
   
   let success = false;
-  let errorMsg = "";
 
   for (let proxy of proxies) {
     try {
@@ -197,11 +195,9 @@ async function fetchBinanceRates() {
       const dataVenta = await resVenta.json();
 
       if (dataCompra && dataCompra.data && dataCompra.data.length > 0 && dataVenta && dataVenta.data && dataVenta.data.length > 0) {
-        // Si funciona, buscamos la casilla de Binance o la creamos
         let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
         if (bIndex === -1) {
           if(EX.length >= 2 && !isPro) { 
-            // Si ya hay 2 casillas y no es pro, usamos la primera por defecto para no bloquearlo
             bIndex = 0; 
             EX[bIndex].n = "Binance";
           } else {
@@ -213,19 +209,15 @@ async function fetchBinanceRates() {
         EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
         success = true;
         break; 
-      } else {
-        errorMsg = "Binance no devolvió datos válidos.";
       }
-    } catch (error) {
-      errorMsg = "Fallo de conexión con el servidor.";
-    }
+    } catch (error) {}
   }
 
   if (success) {
     renderEx(); save(); calc();
     alert("✅ Tasas de Binance P2P extraídas y colocadas.");
   } else {
-    alert("⚠️ No se pudo conectar con Binance (Error de red o bloqueo de Binance).\n\nNo te preocupes, escribe los precios a mano. ¡El cálculo funciona igual de perfecto!");
+    alert("⚠️ No se pudo conectar con Binance (Error de red o bloqueo).\n\nNo te preocupes, escribe los precios a mano. ¡El cálculo funciona igual de perfecto!");
   }
   
   btn.innerHTML = originalText;
