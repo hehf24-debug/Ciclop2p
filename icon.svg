@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="115" fill="#0f1115"/>
+  <path d="M106 256 A150 150 0 0 1 406 256" fill="none" stroke="#3b82f6" stroke-width="30" stroke-linecap="round"/>
+  <path d="M406 256 A150 150 0 0 1 106 256" fill="none" stroke="#22c55e" stroke-width="30" stroke-linecap="round"/>
+  <path d="M406 292 L382 250 L430 250 Z" fill="#3b82f6"/>
+  <path d="M106 220 L82 262 L130 262 Z" fill="#22c55e"/>
+  <text x="256" y="300" font-family="system-ui,-apple-system,sans-serif" font-size="128" font-weight="700" fill="#e8eaed" text-anchor="middle">Bs</text>
+</svg>
