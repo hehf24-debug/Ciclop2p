@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CicloP2P — Calculadora de Arbitraje</title>
+<meta name="theme-color" content="#0f1115">
+<meta name="description" content="Calcula rutas de arbitraje P2P, ganancia neta por ciclo y cuántos ciclos necesitas para tu meta.">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<link rel="apple-touch-icon" href="./icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{--bg:#0f1115;--card:#181b22;--line:#262b36;--txt:#e8eaed;--mut:#8b93a3;--ok:#22c55e;--bad:#ef4444;--acc:#3b82f6;}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px;line-height:1.5;padding-top:calc(14px + env(safe-area-inset-top));}
+  .wrap{max-width:860px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+  .brand img{width:42px;height:42px;border-radius:11px;flex:none;}
+  .bname{font-size:1.05rem;font-weight:700;letter-spacing:-.01em;}
+  .btag{font-size:.72rem;color:var(--mut);}
+  #installBtn{margin-left:auto;background:var(--acc);border:none;color:#fff;padding:8px 13px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;}
+  h1{font-size:1.2rem;margin-bottom:4px;}
+  .sub{color:var(--mut);font-size:.82rem;margin-bottom:16px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:13px;}
+  .card h2{font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin-bottom:11px;font-weight:600;}
+  .grid{display:grid;gap:10px;}
+  .g2{grid-template-columns:1fr 1fr;}
+  label{display:block;font-size:.7rem;color:var(--mut);margin-bottom:4px;}
+  input{width:100%;background:#0d0f13;border:1px solid var(--line);color:var(--txt);padding:10px;border-radius:9px;font-size:.9rem;font-variant-numeric:tabular-nums;}
+  input:focus{outline:none;border-color:var(--acc);}
+  .exch{border:1px solid var(--line);border-radius:11px;padding:10px;margin-bottom:9px;background:#141720;}
+  .exch .nm{font-size:.8rem;font-weight:600;margin-bottom:7px;color:#c9cfdb;}
+  .toggle{display:flex;gap:6px;margin-bottom:12px;}
+  .toggle button{flex:1;background:#0d0f13;border:1px solid var(--line);color:var(--mut);padding:9px;border-radius:9px;font-size:.8rem;cursor:pointer;}
+  .toggle button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;}
+  .btn{width:100%;background:var(--acc);border:none;color:#fff;padding:14px;border-radius:11px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:6px;}
+  .big{font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;}
+  .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.84rem;}
+  .row:last-child{border-bottom:none;}
+  .row span:last-child{font-variant-numeric:tabular-nums;font-weight:600;}
+  .ok{color:var(--ok);} .bad{color:var(--bad);}
+  .warn{background:#2a1a1a;border:1px solid #5c2626;color:#fca5a5;padding:11px;border-radius:10px;font-size:.82rem;margin-top:10px;}
+  .good{background:#12261a;border:1px solid #1f5c33;color:#86efac;padding:11px;border-radius:10px;font-size:.82rem;margin-top:10px;}
+  table{width:100%;border-collapse:collapse;font-size:.79rem;}
+  th{text-align:left;color:var(--mut);font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line);font-size:.69rem;}
+  td{padding:6px 4px;border-bottom:1px solid #1e2229;font-variant-numeric:tabular-nums;}
+  footer{text-align:center;color:var(--mut);font-size:.72rem;padding:18px 0 26px;}
+  footer a{color:var(--acc);text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <img src="./icon.svg" alt="">
+    <div>
+      <div class="bname">CicloP2P</div>
+      <div class="btag">Arbitraje entre exchanges</div>
+    </div>
+    <button id="installBtn" hidden>Instalar</button>
+  </div>
+
+  <h1>Calculadora de Arbitraje P2P</h1>
+  <p class="sub">Compara exchanges, encuentra la ruta rentable y calcula cuántos ciclos necesitas.</p>
+
+  <div class="card">
+    <h2>Capital</h2>
+    <div class="toggle">
+      <button id="tUsdt" class="on">Tengo USDT</button>
+      <button id="tBs">Tengo Bolívares</button>
+    </div>
+    <div class="grid g2">
+      <div><label>Capital inicial</label><input id="cap" type="number" value="60" step="any" inputmode="decimal"></div>
+      <div><label>Comisión retiro (USDT)</label><input id="fee" type="number" value="0.012" step="any" inputmode="decimal"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Exchanges (Bs por USDT)</h2>
+    <div id="exchs"></div>
+  </div>
+
+  <div class="card">
+    <h2>Meta</h2>
+    <div class="grid g2">
+      <div><label>Objetivo (USDT)</label><input id="target" type="number" value="100" step="any" inputmode="decimal"></div>
+      <div><label>Minutos por ciclo</label><input id="mins" type="number" value="60" step="any" inputmode="decimal"></div>
+    </div>
+    <button class="btn" id="calc">Calcular</button>
+  </div>
+
+  <div id="out"></div>
+  
+  <!-- BOTÓN DE KO-FI -->
+  <div style="text-align:center; margin-top: 15px; margin-bottom: 25px;">
+    <a href="https://ko-fi.com/ciclop2p" target="_blank" style="display:inline-block; background:#ff5e5b; color:#fff; text-decoration:none; padding:12px 24px; border-radius:10px; font-weight:700; font-size:0.9rem; box-shadow: 0 4px 12px rgba(255,94,91,0.2);">
+      ☕ Apóyame en Ko-fi
+    </a>
+  </div>
+
+  <footer>Hecho por <b>CicloP2P</b> · <a href="#" id="share">Compartir app</a></footer>
+</div>
+
+<script>
+const KEY = "ciclop2p_v1";
+const EX = [
+  {n:"Binance", c:1038.50, v:1033.00},
+  {n:"Bitget",  c:1028.00, v:1014.00},
+  {n:"Bybit",   c:1040.00, v:1027.00}
+];
+let mode = "usdt";
+const $ = id => document.getElementById(id);
+
+function renderEx(){
+  $("exchs").innerHTML = EX.map((e,i)=>`
+    <div class="exch">
+      <div class="nm">${e.n}</div>
+      <div class="grid g2">
+        <div><label>Compra (pagas)</label><input type="number" step="any" inputmode="decimal" value="${e.c}" oninput="EX[${i}].c=+this.value"></div>
+        <div><label>Venta (recibes)</label><input type="number" step="any" inputmode="decimal" value="${e.v}" oninput="EX[${i}].v=+this.value"></div>
+      </div>
+    </div>`).join("");
+}
+
+function load(){
+  try{
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if(!s) return;
+    if(Array.isArray(s.ex) && s.ex.length === EX.length){
+      s.ex.forEach((x,i)=>{ EX[i].c = +x.c; EX[i].v = +x.v; });
+    }
+    if(s.cap) $("cap").value = s.cap;
+    if(s.fee !== undefined) $("fee").value = s.fee;
+    if(s.target) $("target").value = s.target;
+    if(s.mins) $("mins").value = s.mins;
+    if(s.mode === "bs"){ mode="bs"; $("tBs").classList.add("on"); $("tUsdt").classList.remove("on"); }
+  }catch(e){}
+}
+
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify({
+      ex: EX.map(e=>({c:e.c, v:e.v})),
+      cap: $("cap").value, fee: $("fee").value,
+      target: $("target").value, mins: $("mins").value, mode
+    }));
+  }catch(e){}
+}
+
+load();
+renderEx();
+
+$("tUsdt").onclick=()=>{mode="usdt";$("tUsdt").classList.add("on");$("tBs").classList.remove("on");save();};
+$("tBs").onclick=()=>{mode="bs";$("tBs").classList.add("on");$("tUsdt").classList.remove("on");save();};
+
+function fmt(n,d=2){return n.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d});}
+
+function calc(){
+  const cap=+$("cap").value, fee=+$("fee").value, target=+$("target").value, mins=+$("mins").value;
+  const out=$("out");
+  save();
+
+  if(!(cap>0)||EX.some(e=>!(e.c>0)||!(e.v>0))){
+    out.innerHTML='<div class="card"><div class="warn">Completa todos los precios y el capital con valores mayores que 0.</div></div>';
+    return;
+  }
+
+  let routes=[];
+  for(let i=0;i<EX.length;i++)for(let j=0;j<EX.length;j++){
+    if(i===j)continue;
+    const f=EX[j].v/EX[i].c;
+    routes.push({buy:EX[i].n,sell:EX[j].n,f,margin:(f-1)*100});
+  }
+  routes.sort((a,b)=>b.f-a.f);
+  const best=routes[0];
+  const sellPrice=EX.find(e=>e.n===best.sell).v;
+
+  const netFactor=(x,isBs)=> isBs ? x*best.f - fee*sellPrice : x*best.f - fee;
+  const first=netFactor(cap,mode==="bs");
+  const profit=first-cap;
+  const pct=(profit/cap)*100;
+  const toUsdt=(val,isBs)=> isBs ? val/sellPrice : val;
+  const capU=toUsdt(cap,mode==="bs");
+  const firstU=toUsdt(first,mode==="bs");
+
+  let cycles=null,reached=false,u=capU;
+  if(firstU>capU){
+    for(let k=1;k<=200000;k++){
+      u=u*best.f-fee;
+      if(u>=target){cycles=k;reached=true;break;}
+    }
+  }
+
+  const profitable=profit>0;
+  const U=mode==="bs"?"Bs":"USDT";
+
+  let html=`<div class="card">
+    <h2>Mejor ruta</h2>
+    <div class="big ${profitable?'ok':'bad'}">${best.buy} → ${best.sell}</div>
+    <div class="row"><span>Factor por ciclo</span><span>${best.f.toFixed(6)}</span></div>
+    <div class="row"><span>Margen bruto</span><span class="${best.margin>0?'ok':'bad'}">${best.margin.toFixed(3)}%</span></div>
+    <div class="row"><span>Capital tras 1 ciclo</span><span>${fmt(first)} ${U}</span></div>
+    <div class="row"><span>Ganancia neta 1 ciclo</span><span class="${profitable?'ok':'bad'}">${profit>=0?'+':''}${fmt(profit)} ${U}</span></div>
+    <div class="row"><span>Rentabilidad neta</span><span class="${profitable?'ok':'bad'}">${pct>=0?'+':''}${pct.toFixed(3)}%</span></div>
+    ${profitable?'<div class="good">✅ Ruta rentable. El ciclo genera ganancia después de la comisión.</div>':'<div class="warn">⛔ Ruta NO rentable. La comisión o el spread se comen la ganancia.</div>'}
+  </div>`;
+
+  if(profitable&&reached){
+    const totalMin=cycles*mins, dias=totalMin/1440;
+    html+=`<div class="card">
+      <h2>Ciclos hasta ${fmt(target,2)} USDT</h2>
+      <div class="big ok">${cycles.toLocaleString("es-VE")} ciclos</div>
+      <div class="row"><span>Capital inicial</span><span>${fmt(capU)} USDT</span></div>
+      <div class="row"><span>Tiempo estimado</span><span>${dias<1?fmt(totalMin/60,1)+' h':fmt(dias,1)+' días'}</span></div>
+    </div>`;
+  } else if(profitable){
+    html+=`<div class="card"><div class="warn">Con este margen no se alcanza la meta en 200.000 ciclos.</div></div>`;
+  }
+
+  html+=`<div class="card">
+    <h2>Todas las rutas</h2>
+    <table><thead><tr><th>Comprar</th><th>Vender</th><th>Factor</th><th>Margen</th></tr></thead><tbody>
+    ${routes.map(r=>`<tr><td>${r.buy}</td><td>${r.sell}</td><td>${r.f.toFixed(5)}</td><td class="${r.margin>0?'ok':'bad'}">${r.margin>=0?'+':''}${r.margin.toFixed(2)}%</td></tr>`).join("")}
+    </tbody></table>
+  </div>`;
+
+  out.innerHTML=html;
+}
+$("calc").onclick=calc;
+
+$("share").onclick=e=>{
+  e.preventDefault();
+  if(navigator.share){
+    navigator.share({title:"CicloP2P", text:"Calculadora de arbitraje P2P", url:location.href}).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(location.href);
+    e.target.textContent="¡Copiado!";
+  }
+};
+
+let deferredPrompt;
+window.addEventListener("beforeinstallprompt", e=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  $("installBtn").hidden = false;
+});
+$("installBtn").onclick = async ()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  $("installBtn").hidden = true;
+};
+window.addEventListener("appinstalled", ()=>{ $("installBtn").hidden = true; });
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=> navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>
