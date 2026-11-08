@@ -30,17 +30,23 @@
   label{display:block;font-size:.7rem;color:var(--mut);margin-bottom:4px;}
   input{width:100%;background:#0d0f13;border:1px solid var(--line);color:var(--txt);padding:10px;border-radius:9px;font-size:.9rem;font-variant-numeric:tabular-nums;}
   input:focus{outline:none;border-color:var(--acc);}
+  input::placeholder { color: #4b5563; font-style: italic; }
+  
   .exch{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:12px;background:#141720;position:relative;}
   .exch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
   .exch input.nm{background:transparent;border:none;border-bottom:1px dashed var(--mut);border-radius:0;padding:4px 0;font-weight:600;color:#c9cfdb;width:60%;font-size:.9rem;}
   .exch input.nm:focus{border-bottom-color:var(--acc);}
   .btn-remove{background:none;border:none;color:var(--bad);font-size:1.2rem;cursor:pointer;padding:0 5px;}
+  
   .toggle{display:flex;gap:6px;margin-bottom:12px;}
   .toggle button{flex:1;background:#0d0f13;border:1px solid var(--line);color:var(--mut);padding:9px;border-radius:9px;font-size:.8rem;cursor:pointer;}
   .toggle button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;}
+  
   .btn{width:100%;background:var(--acc);border:none;color:#fff;padding:14px;border-radius:11px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:6px;}
-  .btn-add{background:#2a2e39;color:#fff;margin-top:0;}
+  .btn-add{background:#2a2e39;color:#fff;margin-top:0;display:flex; justify-content:center; align-items:center;}
   .btn-auto{background:linear-gradient(90deg, #10b981, #059669); margin-bottom: 12px; display:flex; justify-content:center; align-items:center; gap:8px;}
+  .btn-clear{background:transparent; color:var(--bad); border: 1px solid var(--bad); font-size: 0.8rem; padding: 8px; margin-top: 15px;}
+  
   .big{font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;}
   .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.84rem;}
   .row:last-child{border-bottom:none;}
@@ -79,7 +85,7 @@
       <button id="tBs">Tengo Bolívares</button>
     </div>
     <div class="grid g2">
-      <div><label>Capital inicial</label><input id="cap" type="number" value="60" step="any" inputmode="decimal"></div>
+      <div><label>Capital inicial</label><input id="cap" type="number" placeholder="Ej: 60" step="any" inputmode="decimal"></div>
       <div><label>Comisión retiro (USDT)</label><input id="fee" type="number" value="0.012" step="any" inputmode="decimal"></div>
     </div>
   </div>
@@ -95,10 +101,11 @@
   <div class="card">
     <h2>Meta</h2>
     <div class="grid g2">
-      <div><label>Objetivo (USDT)</label><input id="target" type="number" value="100" step="any" inputmode="decimal"></div>
-      <div><label>Minutos por ciclo</label><input id="mins" type="number" value="60" step="any" inputmode="decimal"></div>
+      <div><label>Objetivo (USDT)</label><input id="target" type="number" placeholder="Ej: 100" step="any" inputmode="decimal"></div>
+      <div><label>Minutos por ciclo</label><input id="mins" type="number" placeholder="Ej: 60" step="any" inputmode="decimal"></div>
     </div>
     <button class="btn" id="calc">Calcular</button>
+    <button class="btn btn-clear" id="clearBtn">🗑️ Borrar todos los datos</button>
   </div>
 
   <div id="out"></div>
@@ -113,10 +120,12 @@
 </div>
 
 <script>
-const KEY = "ciclop2p_v4"; // Subimos a v4 por los cambios
+const KEY = "ciclop2p_v5"; 
+
+// INICIALIZACIÓN LIMPIA: Valores vacíos y nombres genéricos
 let EX = [
-  { n: "Binance", c: 1038.50, v: 1033.00 },
-  { n: "Bitget", c: 1028.00, v: 1014.00 }
+  { n: "Exchange 1", c: "", v: "" },
+  { n: "Exchange 2", c: "", v: "" }
 ];
 let mode = "usdt";
 let isPro = false; 
@@ -130,60 +139,76 @@ function renderEx(){
         ${EX.length > 2 ? `<button class="btn-remove" onclick="removeExchange(${i})">✕</button>` : ''}
       </div>
       <div class="grid g2">
-        <div><label>Compra (pagas)</label><input type="number" step="any" inputmode="decimal" value="${e.c || ''}" oninput="EX[${i}].c=+this.value; save(); calc();"></div>
-        <div><label>Venta (recibes)</label><input type="number" step="any" inputmode="decimal" value="${e.v || ''}" oninput="EX[${i}].v=+this.value; save(); calc();"></div>
+        <div><label>Compra (pagas)</label><input type="number" step="any" inputmode="decimal" value="${e.c || ''}" placeholder="Ej: 1038.5" oninput="EX[${i}].c=+this.value; save(); calc();"></div>
+        <div><label>Venta (recibes)</label><input type="number" step="any" inputmode="decimal" value="${e.v || ''}" placeholder="Ej: 1033" oninput="EX[${i}].v=+this.value; save(); calc();"></div>
       </div>
     </div>`).join("");
 }
 
-// FUNCIÓN MÁGICA: Traer tasas de Binance P2P
+// FUNCIÓN MÁGICA: Traer tasas de Binance P2P con doble proxy de respaldo
 async function fetchBinanceRates() {
   const btn = $("autoBtn");
   const originalText = btn.innerHTML;
   btn.innerHTML = "⏳ Buscando...";
   btn.disabled = true;
 
-  try {
-    // Usamos un proxy gratuito para evitar el bloqueo CORS del navegador
-    const proxy = "https://api.allorigins.win/raw?url=";
-    const urlCompra = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=BUY");
-    const urlVenta = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=SELL");
+  // Probamos con dos proxys diferentes por si uno falla
+  const proxies = [
+    "https://api.allorigins.win/raw?url=",
+    "https://corsproxy.io/?"
+  ];
 
-    const [resCompra, resVenta] = await Promise.all([
-      fetch(proxy + urlCompra),
-      fetch(proxy + urlVenta)
-    ]);
+  let success = false;
 
-    const dataCompra = await resCompra.json();
-    const dataVenta = await resVenta.json();
+  for (let proxy of proxies) {
+    try {
+      const urlCompra = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=BUY");
+      const urlVenta = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=SELL");
 
-    // Buscamos la primera casilla que se llame "Binance" (o creamos una)
-    let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
-    if (bIndex === -1) {
-      if(EX.length >= 2 && !isPro) { alert("No tienes casilla de Binance y estás en el límite gratis."); return; }
-      EX.push({ n: "Binance", c: 0, v: 0 });
-      bIndex = EX.length - 1;
+      const [resCompra, resVenta] = await Promise.all([
+        fetch(proxy + urlCompra),
+        fetch(proxy + urlVenta)
+      ]);
+
+      const dataCompra = await resCompra.json();
+      const dataVenta = await resVenta.json();
+
+      let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
+      if (bIndex === -1) {
+        if(EX.length >= 2 && !isPro) { 
+          alert("No tienes casilla de Binance y estás en el límite gratis. Añade una casilla manualmente o hazte Pro."); 
+          btn.innerHTML = originalText; btn.disabled = false;
+          return; 
+        }
+        EX.push({ n: "Binance", c: "", v: "" });
+        bIndex = EX.length - 1;
+      }
+
+      if (dataCompra.data && dataCompra.data.length > 0) {
+        EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
+      }
+      if (dataVenta.data && dataVenta.data.length > 0) {
+        EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
+      }
+
+      success = true;
+      break; // Si tuvo éxito, salimos del bucle de proxies
+    } catch (error) {
+      console.log("Falló el proxy, intentando el siguiente...");
     }
+  }
 
-    // Sacamos el primer anuncio (el mejor precio)
-    if (dataCompra.data && dataCompra.data.length > 0) {
-      EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
-    }
-    if (dataVenta.data && dataVenta.data.length > 0) {
-      EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
-    }
-
+  if (success) {
     renderEx();
     save();
     calc();
     alert("✅ Tasas de Binance P2P actualizadas con éxito.");
-  } catch (error) {
-    console.error(error);
-    alert("⚠️ No se pudieron obtener las tasas automáticas. Puedes ingresarlas manualmente.");
-  } finally {
-    btn.innerHTML = originalText;
-    btn.disabled = false;
+  } else {
+    alert("⚠️ Los servidores de Binance están bloqueando la conexión en este momento. Por favor, ingresa los precios manualmente.");
   }
+  
+  btn.innerHTML = originalText;
+  btn.disabled = false;
 }
 
 function addExchange() {
@@ -198,12 +223,19 @@ function addExchange() {
     }
   }
   if (EX.length >= 5) { alert("Máximo 5 exchanges."); return; }
-  EX.push({ n: "Nuevo Exchange", c: 0, v: 0 });
+  EX.push({ n: "Nuevo Exchange", c: "", v: "" });
   renderEx(); save(); calc();
 }
 
 function removeExchange(index) {
   EX.splice(index, 1); renderEx(); save(); calc();
+}
+
+function clearAll() {
+  if(confirm("¿Estás seguro de que quieres borrar todos los datos y empezar de cero?")) {
+    localStorage.removeItem(KEY);
+    location.reload();
+  }
 }
 
 function load(){
@@ -234,16 +266,23 @@ $("tUsdt").onclick=()=>{mode="usdt";$("tUsdt").classList.add("on");$("tBs").clas
 $("tBs").onclick=()=>{mode="bs";$("tBs").classList.add("on");$("tUsdt").classList.remove("on");save();};
 $("addExchBtn").onclick = addExchange;
 $("autoBtn").onclick = fetchBinanceRates;
+$("clearBtn").onclick = clearAll;
 
 function fmt(n,d=2){return n.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d});}
 
 function calc(){
   const cap=+$("cap").value, fee=+$("fee").value, target=+$("target").value, mins=+$("mins").value;
   const out=$("out"); save();
+  
+  // Filtramos solo los que tienen datos reales
   const validEX = EX.filter(e => e.c > 0 && e.v > 0);
 
-  if(!(cap>0) || validEX.length < 2){
-    out.innerHTML='<div class="card"><div class="warn">Completa el capital y al menos 2 exchanges con precios válidos para calcular.</div></div>';
+  if(!(cap>0)){
+    out.innerHTML='<div class="card"><div class="warn">Por favor, ingresa tu capital inicial arriba para empezar.</div></div>';
+    return;
+  }
+  if(validEX.length < 2){
+    out.innerHTML='<div class="card"><div class="warn">Necesitas llenar los precios de al menos 2 exchanges para hacer la comparativa.</div></div>';
     return;
   }
 
@@ -267,7 +306,7 @@ function calc(){
   const firstU=toUsdt(first,mode==="bs");
 
   let cycles=null,reached=false,u=capU;
-  if(firstU>capU){
+  if(firstU>capU && target > 0){
     for(let k=1;k<=200000;k++){
       u=u*best.f-fee;
       if(u>=target){cycles=k;reached=true;break;}
@@ -296,7 +335,7 @@ function calc(){
       <div class="row"><span>Capital inicial</span><span>${fmt(capU)} USDT</span></div>
       <div class="row"><span>Tiempo estimado</span><span>${dias<1?fmt(totalMin/60,1)+' h':fmt(dias,1)+' días'}</span></div>
     </div>`;
-  } else if(profitable){
+  } else if(profitable && target > 0){
     html+=`<div class="card"><div class="warn">Con este margen no se alcanza la meta en 200.000 ciclos.</div></div>`;
   }
 
@@ -334,7 +373,6 @@ window.addEventListener("appinstalled", ()=>{ $("installBtn").hidden = true; });
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=> navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 }
-calc();
 </script>
 </body>
 </html>
