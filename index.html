@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CicloP2P — Calculadora de Arbitraje</title>
 <meta name="theme-color" content="#0f1115">
-<meta name="description" content="Calcula rutas de arbitraje P2P, ganancia neta por ciclo y cuántos ciclos necesitas para tu meta.">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" href="./logo.png">
 <link rel="apple-touch-icon" href="./logo.png">
@@ -17,7 +16,7 @@
   body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:14px;line-height:1.5;padding-top:calc(14px + env(safe-area-inset-top));}
   .wrap{max-width:860px;margin:0 auto;}
   .brand{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
-  .brand img{width:42px;height:42px;border-radius:11px;flex:none;}
+  .brand img{width:42px;height:42px;border-radius:11px;flex:none;object-fit:cover;}
   .bname{font-size:1.05rem;font-weight:700;letter-spacing:-.01em;}
   .btag{font-size:.72rem;color:var(--mut);}
   #installBtn{margin-left:auto;background:var(--acc);border:none;color:#fff;padding:8px 13px;border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;}
@@ -31,19 +30,17 @@
   label{display:block;font-size:.7rem;color:var(--mut);margin-bottom:4px;}
   input{width:100%;background:#0d0f13;border:1px solid var(--line);color:var(--txt);padding:10px;border-radius:9px;font-size:.9rem;font-variant-numeric:tabular-nums;}
   input:focus{outline:none;border-color:var(--acc);}
-  
-  /* Estilos de las casillas de Exchange */
   .exch{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:12px;background:#141720;position:relative;}
   .exch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
   .exch input.nm{background:transparent;border:none;border-bottom:1px dashed var(--mut);border-radius:0;padding:4px 0;font-weight:600;color:#c9cfdb;width:60%;font-size:.9rem;}
   .exch input.nm:focus{border-bottom-color:var(--acc);}
   .btn-remove{background:none;border:none;color:var(--bad);font-size:1.2rem;cursor:pointer;padding:0 5px;}
-
   .toggle{display:flex;gap:6px;margin-bottom:12px;}
   .toggle button{flex:1;background:#0d0f13;border:1px solid var(--line);color:var(--mut);padding:9px;border-radius:9px;font-size:.8rem;cursor:pointer;}
   .toggle button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;}
   .btn{width:100%;background:var(--acc);border:none;color:#fff;padding:14px;border-radius:11px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:6px;}
   .btn-add{background:#2a2e39;color:#fff;margin-top:0;}
+  .btn-auto{background:linear-gradient(90deg, #10b981, #059669); margin-bottom: 12px; display:flex; justify-content:center; align-items:center; gap:8px;}
   .big{font-size:1.45rem;font-weight:700;font-variant-numeric:tabular-nums;}
   .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:.84rem;}
   .row:last-child{border-bottom:none;}
@@ -56,8 +53,6 @@
   td{padding:6px 4px;border-bottom:1px solid #1e2229;font-variant-numeric:tabular-nums;}
   footer{text-align:center;color:var(--mut);font-size:.72rem;padding:18px 0 26px;}
   footer a{color:var(--acc);text-decoration:none;}
-  
-  /* Estilos Pro */
   .card-pro { border: 1px solid var(--pro); background: linear-gradient(180deg, #181b22 0%, #1c1a2e 100%); }
   .card-pro h2 { color: #a78bfa; }
   .btn-pro { background: var(--pro); }
@@ -66,7 +61,7 @@
 <body>
 <div class="wrap">
   <div class="brand">
-    <img src="./logo.png" alt="CicloP2P">
+    <img src="./logo.png" alt="Logo">
     <div>
       <div class="bname">CicloP2P</div>
       <div class="btag">Arbitraje Universal</div>
@@ -91,9 +86,9 @@
 
   <div class="card">
     <h2>Tus Exchanges (Bs por USDT)</h2>
-    <p class="hint">💡 Escribe el nombre de tu exchange y las tasas que ves en este momento.</p>
+    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas reales de Binance</button>
+    <p class="hint">💡 O escribe el nombre de tu exchange y las tasas manualmente.</p>
     <div id="exchs"></div>
-    
     <button class="btn btn-add" id="addExchBtn">+ Añadir otro exchange</button>
   </div>
 
@@ -108,7 +103,6 @@
 
   <div id="out"></div>
   
-  <!-- BOTÓN DE KO-FI -->
   <div style="text-align:center; margin-top: 15px; margin-bottom: 25px;">
     <a href="https://ko-fi.com/ciclop2p" target="_blank" style="display:inline-block; background:#ff5e5b; color:#fff; text-decoration:none; padding:12px 24px; border-radius:10px; font-weight:700; font-size:0.9rem; box-shadow: 0 4px 12px rgba(255,94,91,0.2);">
       ☕ Apóyame en Ko-fi
@@ -119,16 +113,13 @@
 </div>
 
 <script>
-const KEY = "ciclop2p_v3"; // Versión universal
-
-// Iniciamos con 2 exchanges genéricos por defecto
+const KEY = "ciclop2p_v4"; // Subimos a v4 por los cambios
 let EX = [
-  { n: "Exchange 1", c: 1038.50, v: 1033.00 },
-  { n: "Exchange 2", c: 1028.00, v: 1014.00 }
+  { n: "Binance", c: 1038.50, v: 1033.00 },
+  { n: "Bitget", c: 1028.00, v: 1014.00 }
 ];
-
 let mode = "usdt";
-let isPro = false; // Estado del usuario (luego se puede validar con un código)
+let isPro = false; 
 const $ = id => document.getElementById(id);
 
 function renderEx(){
@@ -145,43 +136,81 @@ function renderEx(){
     </div>`).join("");
 }
 
+// FUNCIÓN MÁGICA: Traer tasas de Binance P2P
+async function fetchBinanceRates() {
+  const btn = $("autoBtn");
+  const originalText = btn.innerHTML;
+  btn.innerHTML = "⏳ Buscando...";
+  btn.disabled = true;
+
+  try {
+    // Usamos un proxy gratuito para evitar el bloqueo CORS del navegador
+    const proxy = "https://api.allorigins.win/raw?url=";
+    const urlCompra = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=BUY");
+    const urlVenta = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=SELL");
+
+    const [resCompra, resVenta] = await Promise.all([
+      fetch(proxy + urlCompra),
+      fetch(proxy + urlVenta)
+    ]);
+
+    const dataCompra = await resCompra.json();
+    const dataVenta = await resVenta.json();
+
+    // Buscamos la primera casilla que se llame "Binance" (o creamos una)
+    let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
+    if (bIndex === -1) {
+      if(EX.length >= 2 && !isPro) { alert("No tienes casilla de Binance y estás en el límite gratis."); return; }
+      EX.push({ n: "Binance", c: 0, v: 0 });
+      bIndex = EX.length - 1;
+    }
+
+    // Sacamos el primer anuncio (el mejor precio)
+    if (dataCompra.data && dataCompra.data.length > 0) {
+      EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
+    }
+    if (dataVenta.data && dataVenta.data.length > 0) {
+      EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
+    }
+
+    renderEx();
+    save();
+    calc();
+    alert("✅ Tasas de Binance P2P actualizadas con éxito.");
+  } catch (error) {
+    console.error(error);
+    alert("⚠️ No se pudieron obtener las tasas automáticas. Puedes ingresarlas manualmente.");
+  } finally {
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
 function addExchange() {
   if (EX.length >= 2 && !isPro) {
-    // Lógica del muro de pago
     const code = prompt("Has alcanzado el límite de 2 exchanges (Versión Gratis).\n\nPara desbloquear exchanges ilimitados, apoya el proyecto en Ko-fi y obtén tu código Pro.\n\nSi ya tienes tu código, ingrésalo aquí:");
-    if (code === "CICLO2024") { // Código secreto de prueba
+    if (code === "CICLO2024") { 
       isPro = true;
-      alert("¡Código correcto! Bienvenido a la Versión Pro. Ahora puedes añadir todos los exchanges que quieras.");
+      alert("¡Código correcto! Bienvenido a la Versión Pro.");
     } else {
-      alert("Código incorrecto o cancelado. Recuerda que puedes apoyar el proyecto en el botón rojo de Ko-fi.");
+      alert("Código incorrecto o cancelado.");
       return;
     }
   }
-  
-  if (EX.length >= 5) {
-    alert("Para mantener el rendimiento, el máximo es de 5 exchanges a la vez.");
-    return;
-  }
-
+  if (EX.length >= 5) { alert("Máximo 5 exchanges."); return; }
   EX.push({ n: "Nuevo Exchange", c: 0, v: 0 });
-  renderEx();
-  save();
+  renderEx(); save(); calc();
 }
 
 function removeExchange(index) {
-  EX.splice(index, 1);
-  renderEx();
-  save();
-  calc();
+  EX.splice(index, 1); renderEx(); save(); calc();
 }
 
 function load(){
   try{
     const s = JSON.parse(localStorage.getItem(KEY));
     if(!s) return;
-    if(Array.isArray(s.ex) && s.ex.length >= 2){
-      EX = s.ex;
-    }
+    if(Array.isArray(s.ex) && s.ex.length >= 2){ EX = s.ex; }
     if(s.cap) $("cap").value = s.cap;
     if(s.fee !== undefined) $("fee").value = s.fee;
     if(s.target) $("target").value = s.target;
@@ -193,32 +222,28 @@ function load(){
 function save(){
   try{
     localStorage.setItem(KEY, JSON.stringify({
-      ex: EX,
-      cap: $("cap").value, fee: $("fee").value,
+      ex: EX, cap: $("cap").value, fee: $("fee").value,
       target: $("target").value, mins: $("mins").value, mode
     }));
   }catch(e){}
 }
 
-load();
-renderEx();
+load(); renderEx();
 
 $("tUsdt").onclick=()=>{mode="usdt";$("tUsdt").classList.add("on");$("tBs").classList.remove("on");save();};
 $("tBs").onclick=()=>{mode="bs";$("tBs").classList.add("on");$("tUsdt").classList.remove("on");save();};
 $("addExchBtn").onclick = addExchange;
+$("autoBtn").onclick = fetchBinanceRates;
 
 function fmt(n,d=2){return n.toLocaleString("es-VE",{minimumFractionDigits:d,maximumFractionDigits:d});}
 
 function calc(){
   const cap=+$("cap").value, fee=+$("fee").value, target=+$("target").value, mins=+$("mins").value;
-  const out=$("out");
-  save();
-
-  // Filtramos los exchanges que realmente tengan datos válidos
+  const out=$("out"); save();
   const validEX = EX.filter(e => e.c > 0 && e.v > 0);
 
   if(!(cap>0) || validEX.length < 2){
-    out.innerHTML='<div class="card"><div class="warn">Completa el capital y al menos 2 exchanges con precios válidos (mayores a 0) para calcular.</div></div>';
+    out.innerHTML='<div class="card"><div class="warn">Completa el capital y al menos 2 exchanges con precios válidos para calcular.</div></div>';
     return;
   }
 
@@ -230,9 +255,6 @@ function calc(){
   }
   routes.sort((a,b)=>b.f-a.f);
   const best=routes[0];
-  const sellPrice=validEX.find(e=>e.n === best.sell || `Exchange ${validEX.indexOf(e)+1}` === best.sell)?.v || validEX[0].v; // fallback
-
-  // Recalcular sellPrice de forma segura
   const bestSellObj = validEX.find(e => (e.n || `Exchange ${validEX.indexOf(e)+1}`) === best.sell);
   const realSellPrice = bestSellObj ? bestSellObj.v : validEX[1].v;
 
@@ -285,7 +307,6 @@ function calc(){
     </tbody></table>
   </div>`;
 
-  // Tarjeta Pro si no son pro
   if (!isPro) {
     html += `<div class="card card-pro">
       <h2>💎 Desbloquea la Versión Pro</h2>
@@ -294,7 +315,6 @@ function calc(){
       </p>
     </div>`;
   }
-
   out.innerHTML=html;
 }
 
@@ -302,34 +322,18 @@ $("calc").onclick=calc;
 
 $("share").onclick=e=>{
   e.preventDefault();
-  if(navigator.share){
-    navigator.share({title:"CicloP2P", text:"Calculadora de arbitraje P2P", url:location.href}).catch(()=>{});
-  } else {
-    navigator.clipboard?.writeText(location.href);
-    e.target.textContent="¡Copiado!";
-  }
+  if(navigator.share){ navigator.share({title:"CicloP2P", text:"Calculadora de arbitraje P2P", url:location.href}).catch(()=>{}); } 
+  else { navigator.clipboard?.writeText(location.href); e.target.textContent="¡Copiado!"; }
 };
 
 let deferredPrompt;
-window.addEventListener("beforeinstallprompt", e=>{
-  e.preventDefault();
-  deferredPrompt = e;
-  $("installBtn").hidden = false;
-});
-$("installBtn").onclick = async ()=>{
-  if(!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  $("installBtn").hidden = true;
-};
+window.addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); deferredPrompt = e; $("installBtn").hidden = false; });
+$("installBtn").onclick = async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; $("installBtn").hidden = true; };
 window.addEventListener("appinstalled", ()=>{ $("installBtn").hidden = true; });
 
 if("serviceWorker" in navigator){
   window.addEventListener("load", ()=> navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 }
-
-// Calcular al inicio
 calc();
 </script>
 </body>
