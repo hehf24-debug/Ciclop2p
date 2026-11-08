@@ -115,8 +115,8 @@
 
   <div class="card">
     <h2>Tus Exchanges (Bs por USDT)</h2>
-    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas reales de Binance</button>
-    <p class="hint">💡 O escribe el nombre de tu exchange y las tasas manualmente.</p>
+    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas de Binance (Beta)</button>
+    <p class="hint">💡 Escribe el nombre de <b>cualquier</b> exchange y sus tasas. El botón verde solo intenta traer Binance automáticamente.</p>
     <div id="exchs"></div>
     <button class="btn btn-add" id="addExchBtn">+ Añadir otro exchange</button>
   </div>
@@ -143,11 +143,11 @@
 </div>
 
 <script>
-const KEY = "ciclop2p_v8"; 
+const KEY = "ciclop2p_v9"; 
 
 let EX = [
-  { n: "Binance", c: "", v: "" },
-  { n: "Bitget", c: "", v: "" }
+  { n: "Exchange 1", c: "", v: "" },
+  { n: "Exchange 2", c: "", v: "" }
 ];
 let mode = "usdt";
 let isPro = false; 
@@ -167,13 +167,19 @@ function renderEx(){
     </div>`).join("");
 }
 
+// FUNCIÓN ACTUALIZADA CON NUEVOS PROXIES MÁS ESTABLES
 async function fetchBinanceRates() {
   const btn = $("autoBtn");
   const originalText = btn.innerHTML;
   btn.innerHTML = "⏳ Buscando...";
   btn.disabled = true;
 
-  const proxies = ["https://corsproxy.io/?", "https://api.allorigins.win/raw?url="];
+  // Codetabs y AllOrigins son más estables para APIs que Corsproxy
+  const proxies = [
+    "https://api.codetabs.com/v1/proxy?quest=",
+    "https://api.allorigins.win/raw?url="
+  ];
+  
   let success = false;
   let errorMsg = "";
 
@@ -191,33 +197,35 @@ async function fetchBinanceRates() {
       const dataVenta = await resVenta.json();
 
       if (dataCompra && dataCompra.data && dataCompra.data.length > 0 && dataVenta && dataVenta.data && dataVenta.data.length > 0) {
+        // Si funciona, buscamos la casilla de Binance o la creamos
         let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
         if (bIndex === -1) {
           if(EX.length >= 2 && !isPro) { 
-            alert("No tienes casilla de Binance y estás en el límite gratis. Añade una casilla manualmente o escribe 'Binance'."); 
-            btn.innerHTML = originalText; btn.disabled = false;
-            return; 
+            // Si ya hay 2 casillas y no es pro, usamos la primera por defecto para no bloquearlo
+            bIndex = 0; 
+            EX[bIndex].n = "Binance";
+          } else {
+            EX.push({ n: "Binance", c: "", v: "" });
+            bIndex = EX.length - 1;
           }
-          EX.push({ n: "Binance", c: "", v: "" });
-          bIndex = EX.length - 1;
         }
         EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
         EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
         success = true;
         break; 
       } else {
-        errorMsg = "Binance no devolvió datos válidos en este intento.";
+        errorMsg = "Binance no devolvió datos válidos.";
       }
     } catch (error) {
-      errorMsg = error.message;
+      errorMsg = "Fallo de conexión con el servidor.";
     }
   }
 
   if (success) {
     renderEx(); save(); calc();
-    alert("✅ Tasas de Binance P2P extraídas y colocadas en la casilla.");
+    alert("✅ Tasas de Binance P2P extraídas y colocadas.");
   } else {
-    alert("⚠️ Error real: No se pudo conectar con Binance P2P.\nDetalle: " + errorMsg + "\n\nPor favor, ingresa los precios a mano.");
+    alert("⚠️ No se pudo conectar con Binance (Error de red o bloqueo de Binance).\n\nNo te preocupes, escribe los precios a mano. ¡El cálculo funciona igual de perfecto!");
   }
   
   btn.innerHTML = originalText;
