@@ -41,39 +41,15 @@
   .exch{border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:12px;background:#141720;position:relative;}
   .exch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}
   
-  /* ESTILOS DEL MENÚ DESPLEGABLE DE EXCHANGES */
   .exch select.nm-select {
-    background: transparent;
-    border: none;
-    border-bottom: 1px dashed var(--mut);
-    border-radius: 0;
-    padding: 4px 0;
-    font-weight: 600;
-    color: #c9cfdb;
-    width: 70%;
-    font-size: .95rem;
-    outline: none;
-    cursor: pointer;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
+    background: transparent; border: none; border-bottom: 1px dashed var(--mut); border-radius: 0;
+    padding: 4px 0; font-weight: 600; color: #c9cfdb; width: 70%; font-size: .95rem;
+    outline: none; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none;
   }
   .exch select.nm-select:focus { border-bottom-color: var(--acc); }
   .exch select.nm-select option { background: #181b22; color: white; font-size: 1rem; }
   
-  .nm-custom {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--acc);
-    border-radius: 0;
-    padding: 4px 0;
-    font-weight: 600;
-    color: #fff;
-    width: 100%;
-    font-size: .95rem;
-    margin-bottom: 10px;
-    outline: none;
-  }
+  .nm-custom { background: transparent; border: none; border-bottom: 1px solid var(--acc); border-radius: 0; padding: 4px 0; font-weight: 600; color: #fff; width: 100%; font-size: .95rem; margin-bottom: 10px; outline: none; }
   
   .btn-remove{background:none;border:none;color:var(--bad);font-size:1.2rem;cursor:pointer;padding:0 5px;}
   
@@ -121,10 +97,25 @@
     <h2>Capital y Comisiones</h2>
     <div class="toggle">
       <button id="tUsdt" class="on">Tengo USDT</button>
-      <button id="tBs">Tengo Bolívares</button>
+      <button id="tLocal">Tengo Moneda Local</button>
     </div>
+    
+    <!-- NUEVO SELECTOR DE MONEDA -->
+    <div style="margin-bottom: 10px; display: none;" id="currencyContainer">
+      <label>Selecciona tu moneda local</label>
+      <select id="currencySelect" class="network-select" style="margin-bottom:0;">
+        <option value="VES">VES - Bolívares (Venezuela)</option>
+        <option value="COP">COP - Pesos (Colombia)</option>
+        <option value="ARS">ARS - Pesos (Argentina)</option>
+        <option value="MXN">MXN - Pesos (México)</option>
+        <option value="CLP">CLP - Pesos (Chile)</option>
+        <option value="PEN">PEN - Soles (Perú)</option>
+        <option value="USD">USD - Dólares</option>
+      </select>
+    </div>
+
     <div class="grid g2">
-      <div><label>Capital inicial</label><input id="cap" type="number" placeholder="Ej: 60" step="any" inputmode="decimal"></div>
+      <div><label id="capLabel">Capital inicial</label><input id="cap" type="number" placeholder="Ej: 60" step="any" inputmode="decimal"></div>
       <div><label>Comisión retiro (USDT)</label><input id="fee" type="number" value="1.5" step="any" inputmode="decimal"></div>
     </div>
     
@@ -142,23 +133,29 @@
         <option value="0.012">Plasma - ~0.012 USDT</option>
         <option value="0.0">Otra (Especificar manualmente)</option>
       </select>
-      <p class="hint">Al seleccionar una red, el campo de comisión se actualiza automáticamente. Puedes editarlo si tu exchange cobra una tarifa diferente.</p>
     </div>
   </div>
 
   <div class="card">
-    <h2>Tus Exchanges (Bs por USDT)</h2>
-    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas de Binance (Beta)</button>
-    <p class="hint">💡 Selecciona tu exchange de la lista y escribe las tasas que ves en tu app en este momento.</p>
+    <h2>Tus Exchanges (<span id="localCurrencyText">Bs</span> por USDT)</h2>
+    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas de Binance (Solo VES)</button>
+    <p class="hint">💡 Selecciona tu exchange y escribe las tasas que ves en tu app en este momento.</p>
     <div id="exchs"></div>
     <button class="btn btn-add" id="addExchBtn">+ Añadir otro exchange</button>
   </div>
 
   <div class="card">
     <h2>Meta</h2>
+    <!-- NUEVA EXPLICACIÓN DE META -->
+    <div class="info-box" style="border-left-color: var(--pro);">
+      <strong>🎯 ¿Para qué sirve esta sección?</strong>
+      <b>1. Objetivo (USDT):</b> ¿Cuántos USDT quieres llegar a tener en total? (Ej: Si tienes 60 y quieres llegar a 100, tu meta es 100).<br><br>
+      <b>2. Tiempo por ciclo (min):</b> Un "ciclo" es el proceso completo de Comprar USDT en un exchange, transferirlo y Venderlo en el otro. ¿Cuántos minutos tardas en hacer esto en la vida real? (Ej: 15 min). La app usará esto para decirte cuántos días tardarás en llegar a tu meta.
+    </div>
+
     <div class="grid g2">
       <div><label>Objetivo (USDT)</label><input id="target" type="number" placeholder="Ej: 100" step="any" inputmode="decimal"></div>
-      <div><label>Minutos por ciclo</label><input id="mins" type="number" placeholder="Ej: 60" step="any" inputmode="decimal"></div>
+      <div><label>Tiempo por ciclo (min)</label><input id="mins" type="number" placeholder="Ej: 15" step="any" inputmode="decimal"></div>
     </div>
     <button class="btn" id="calc">Calcular</button>
     <button class="btn btn-clear" id="clearBtn">🗑️ Borrar todos los datos</button>
@@ -172,30 +169,58 @@
     </a>
   </div>
 
-  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v11)</span> · <a href="#" id="share">Compartir app</a></footer>
+  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v12)</span> · <a href="#" id="share">Compartir app</a></footer>
 </div>
 
 <script>
-const KEY = "ciclop2p_v11"; 
+const KEY = "ciclop2p_v12"; 
 
-// LISTA DE EXCHANGES POPULARES
 const EXCHANGES_POPULARES = [
   "Binance", "Bitget", "Bybit", "OKX", "BingX", "MEXC", "KuCoin", "El Dorado", "Syklo", "Reserve", "Otro"
 ];
+
+const CURRENCIES = {
+  VES: { symbol: "Bs", name: "Bolívares" },
+  COP: { symbol: "COP", name: "Pesos Colombianos" },
+  ARS: { symbol: "ARS", name: "Pesos Argentinos" },
+  MXN: { symbol: "MXN", name: "Pesos Mexicanos" },
+  CLP: { symbol: "CLP", name: "Pesos Chilenos" },
+  PEN: { symbol: "S/", name: "Soles" },
+  USD: { symbol: "$", name: "Dólares" }
+};
 
 let EX = [
   { n: "Binance", c: "", v: "" },
   { n: "Bitget", c: "", v: "" }
 ];
 let mode = "usdt";
+let localCurrency = "VES";
 let isPro = false; 
 const $ = id => document.getElementById(id);
 
+function updateUI() {
+  const cur = CURRENCIES[localCurrency];
+  
+  // Actualizar textos según la moneda
+  $("localCurrencyText").textContent = cur.symbol;
+  if (mode === "local") {
+    $("capLabel").textContent = `Capital inicial (${cur.symbol})`;
+    $("currencyContainer").style.display = "block";
+  } else {
+    $("capLabel").textContent = "Capital inicial (USDT)";
+    $("currencyContainer").style.display = "none";
+  }
+  
+  renderEx();
+  save();
+  calc();
+}
+
 function renderEx(){
   $("exchs").innerHTML = EX.map((e,i)=>{
-    // Verificamos si el exchange actual está en la lista o es personalizado
     const isCustom = !EXCHANGES_POPULARES.includes(e.n) || e.n === "Otro";
     const selectValue = isCustom ? "Otro" : e.n;
+    const curSymbol = CURRENCIES[localCurrency].symbol;
     
     return `
     <div class="exch">
@@ -209,36 +234,34 @@ function renderEx(){
       ${isCustom ? `<input type="text" class="nm-custom" value="${e.n === 'Otro' ? '' : e.n}" placeholder="Escribe el nombre..." oninput="EX[${i}].n=this.value; save(); calc();">` : ''}
       
       <div class="grid g2">
-        <div><label>Compra (pagas)</label><input type="number" step="any" inputmode="decimal" value="${e.c || ''}" placeholder="Ej: 1038.5" oninput="EX[${i}].c=+this.value; save(); calc();"></div>
-        <div><label>Venta (recibes)</label><input type="number" step="any" inputmode="decimal" value="${e.v || ''}" placeholder="Ej: 1033" oninput="EX[${i}].v=+this.value; save(); calc();"></div>
+        <div><label>Compra (pagas en ${curSymbol})</label><input type="number" step="any" inputmode="decimal" value="${e.c || ''}" placeholder="Ej: 1038.5" oninput="EX[${i}].c=+this.value; save(); calc();"></div>
+        <div><label>Venta (recibes en ${curSymbol})</label><input type="number" step="any" inputmode="decimal" value="${e.v || ''}" placeholder="Ej: 1033" oninput="EX[${i}].v=+this.value; save(); calc();"></div>
       </div>
     </div>`
   }).join("");
 }
 
-// Actualizar el nombre cuando se selecciona del menú
 function updateExName(index, value) {
   if (value === "Otro") {
-    EX[index].n = ""; // Se vacía para que el usuario escriba
+    EX[index].n = ""; 
   } else {
     EX[index].n = value;
   }
-  save();
-  renderEx(); // Volvemos a dibujar para mostrar u ocultar el campo de texto
-  calc();
+  save(); renderEx(); calc();
 }
 
 async function fetchBinanceRates() {
+  if (localCurrency !== "VES") {
+    alert("El botón automático solo funciona para Venezuela (VES) por ahora. Para otras monedas, por favor ingresa los precios manualmente.");
+    return;
+  }
+
   const btn = $("autoBtn");
   const originalText = btn.innerHTML;
   btn.innerHTML = "⏳ Buscando...";
   btn.disabled = true;
 
-  const proxies = [
-    "https://api.codetabs.com/v1/proxy?quest=",
-    "https://api.allorigins.win/raw?url="
-  ];
-  
+  const proxies = ["https://api.codetabs.com/v1/proxy?quest=", "https://api.allorigins.win/raw?url="];
   let success = false;
 
   for (let proxy of proxies) {
@@ -246,54 +269,37 @@ async function fetchBinanceRates() {
       const urlCompra = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=BUY");
       const urlVenta = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=SELL");
 
-      const [resCompra, resVenta] = await Promise.all([
-        fetch(proxy + urlCompra),
-        fetch(proxy + urlVenta)
-      ]);
-
+      const [resCompra, resVenta] = await Promise.all([fetch(proxy + urlCompra), fetch(proxy + urlVenta)]);
       const dataCompra = await resCompra.json();
       const dataVenta = await resVenta.json();
 
       if (dataCompra && dataCompra.data && dataCompra.data.length > 0 && dataVenta && dataVenta.data && dataVenta.data.length > 0) {
         let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
         if (bIndex === -1) {
-          if(EX.length >= 2 && !isPro) { 
-            bIndex = 0; 
-            EX[bIndex].n = "Binance";
-          } else {
-            EX.push({ n: "Binance", c: "", v: "" });
-            bIndex = EX.length - 1;
-          }
+          if(EX.length >= 2 && !isPro) { bIndex = 0; EX[bIndex].n = "Binance"; } 
+          else { EX.push({ n: "Binance", c: "", v: "" }); bIndex = EX.length - 1; }
         }
         EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
         EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
-        success = true;
-        break; 
+        success = true; break; 
       }
     } catch (error) {}
   }
 
   if (success) {
     renderEx(); save(); calc();
-    alert("✅ Tasas de Binance P2P extraídas y colocadas.");
+    alert("✅ Tasas de Binance P2P extraídas.");
   } else {
-    alert("⚠️ No se pudo conectar con Binance (Error de red o bloqueo).\n\nNo te preocupes, escribe los precios a mano. ¡El cálculo funciona igual de perfecto!");
+    alert("⚠️ No se pudo conectar con Binance.\n\nNo te preocupes, escribe los precios a mano.");
   }
-  
-  btn.innerHTML = originalText;
-  btn.disabled = false;
+  btn.innerHTML = originalText; btn.disabled = false;
 }
 
 function addExchange() {
   if (EX.length >= 2 && !isPro) {
-    const code = prompt("Has alcanzado el límite de 2 exchanges (Versión Gratis).\n\nPara desbloquear exchanges ilimitados, apoya el proyecto en Ko-fi y obtén tu código Pro.\n\nSi ya tienes tu código, ingrésalo aquí:");
-    if (code === "CICLO2024") { 
-      isPro = true;
-      alert("¡Código correcto! Bienvenido a la Versión Pro.");
-    } else {
-      alert("Código incorrecto o cancelado.");
-      return;
-    }
+    const code = prompt("Límite de 2 exchanges (Gratis).\n\nApoya el proyecto en Ko-fi para obtener tu código Pro.\n\nSi ya tienes tu código, ingrésalo aquí:");
+    if (code === "CICLO2024") { isPro = true; alert("¡Código correcto! Bienvenido a la Versión Pro."); } 
+    else { alert("Código incorrecto o cancelado."); return; }
   }
   if (EX.length >= 5) { alert("Máximo 5 exchanges."); return; }
   EX.push({ n: "Otro", c: "", v: "" });
@@ -305,9 +311,8 @@ function removeExchange(index) {
 }
 
 function clearAll() {
-  if(confirm("¿Estás seguro de que quieres borrar todos los datos y empezar de cero?")) {
-    localStorage.removeItem(KEY);
-    location.reload();
+  if(confirm("¿Seguro que quieres borrar todos los datos?")) {
+    localStorage.removeItem(KEY); location.reload();
   }
 }
 
@@ -320,7 +325,8 @@ function load(){
     if(s.fee !== undefined) $("fee").value = s.fee;
     if(s.target) $("target").value = s.target;
     if(s.mins) $("mins").value = s.mins;
-    if(s.mode === "bs"){ mode="bs"; $("tBs").classList.add("on"); $("tUsdt").classList.remove("on"); }
+    if(s.currency) { localCurrency = s.currency; $("currencySelect").value = s.currency; }
+    if(s.mode === "local"){ mode="local"; $("tLocal").classList.add("on"); $("tUsdt").classList.remove("on"); }
   }catch(e){}
 }
 
@@ -328,15 +334,17 @@ function save(){
   try{
     localStorage.setItem(KEY, JSON.stringify({
       ex: EX, cap: $("cap").value, fee: $("fee").value,
-      target: $("target").value, mins: $("mins").value, mode
+      target: $("target").value, mins: $("mins").value, mode, currency: localCurrency
     }));
   }catch(e){}
 }
 
-load(); renderEx();
+load(); updateUI();
 
-$("tUsdt").onclick=()=>{mode="usdt";$("tUsdt").classList.add("on");$("tBs").classList.remove("on");save();};
-$("tBs").onclick=()=>{mode="bs";$("tBs").classList.add("on");$("tUsdt").classList.remove("on");save();};
+$("tUsdt").onclick=()=>{mode="usdt";$("tUsdt").classList.add("on");$("tLocal").classList.remove("on");updateUI();};
+$("tLocal").onclick=()=>{mode="local";$("tLocal").classList.add("on");$("tUsdt").classList.remove("on");updateUI();};
+$("currencySelect").onchange=(e)=>{ localCurrency = e.target.value; updateUI(); };
+
 $("addExchBtn").onclick = addExchange;
 $("autoBtn").onclick = fetchBinanceRates;
 $("clearBtn").onclick = clearAll;
@@ -344,11 +352,7 @@ $("clearBtn").onclick = clearAll;
 $("networkSelect").addEventListener("change", function() {
   const feeInput = $("fee");
   const selectedValue = parseFloat(this.value);
-  if (!isNaN(selectedValue)) {
-    feeInput.value = selectedValue;
-  } else {
-    feeInput.value = 1.5;
-  }
+  if (!isNaN(selectedValue)) { feeInput.value = selectedValue; } else { feeInput.value = 1.5; }
   save(); calc();
 });
 
@@ -359,13 +363,14 @@ function calc(){
   const out=$("out"); save();
   
   const validEX = EX.filter(e => e.c > 0 && e.v > 0 && e.n.trim() !== "");
+  const curSymbol = CURRENCIES[localCurrency].symbol;
 
   if(!(cap>0)){
-    out.innerHTML='<div class="card"><div class="warn">Por favor, ingresa tu capital inicial arriba para empezar.</div></div>';
+    out.innerHTML='<div class="card"><div class="warn">Por favor, ingresa tu capital inicial arriba.</div></div>';
     return;
   }
   if(validEX.length < 2){
-    out.innerHTML='<div class="card"><div class="warn">Necesitas llenar los precios de al menos 2 exchanges para hacer la comparativa.</div></div>';
+    out.innerHTML='<div class="card"><div class="warn">Necesitas llenar los precios de al menos 2 exchanges.</div></div>';
     return;
   }
 
@@ -380,13 +385,13 @@ function calc(){
   const bestSellObj = validEX.find(e => e.n === best.sell);
   const realSellPrice = bestSellObj ? bestSellObj.v : validEX[1].v;
 
-  const netFactor=(x,isBs)=> isBs ? x*best.f - fee*realSellPrice : x*best.f - fee;
-  const first=netFactor(cap,mode==="bs");
+  const netFactor=(x,isLocal)=> isLocal ? x*best.f - fee*realSellPrice : x*best.f - fee;
+  const first=netFactor(cap,mode==="local");
   const profit=first-cap;
   const pct=(profit/cap)*100;
-  const toUsdt=(val,isBs)=> isBs ? val/realSellPrice : val;
-  const capU=toUsdt(cap,mode==="bs");
-  const firstU=toUsdt(first,mode==="bs");
+  const toUsdt=(val,isLocal)=> isLocal ? val/realSellPrice : val;
+  const capU=toUsdt(cap,mode==="local");
+  const firstU=toUsdt(first,mode==="local");
 
   let cycles=null,reached=false,u=capU;
   if(firstU>capU && target > 0){
@@ -397,15 +402,15 @@ function calc(){
   }
 
   const profitable=profit>0;
-  const U=mode==="bs"?"Bs":"USDT";
+  const displayU = mode==="local" ? curSymbol : "USDT";
 
   let html=`<div class="card">
     <h2>Mejor ruta encontrada</h2>
     <div class="big ${profitable?'ok':'bad'}">${best.buy} ➔ ${best.sell}</div>
     <div class="row"><span>Factor por ciclo</span><span>${best.f.toFixed(6)}</span></div>
     <div class="row"><span>Margen bruto</span><span class="${best.margin>0?'ok':'bad'}">${best.margin.toFixed(3)}%</span></div>
-    <div class="row"><span>Capital tras 1 ciclo</span><span>${fmt(first)} ${U}</span></div>
-    <div class="row"><span>Ganancia neta 1 ciclo</span><span class="${profitable?'ok':'bad'}">${profit>=0?'+':''}${fmt(profit)} ${U}</span></div>
+    <div class="row"><span>Capital tras 1 ciclo</span><span>${fmt(first)} ${displayU}</span></div>
+    <div class="row"><span>Ganancia neta 1 ciclo</span><span class="${profitable?'ok':'bad'}">${profit>=0?'+':''}${fmt(profit)} ${displayU}</span></div>
     <div class="row"><span>Rentabilidad neta</span><span class="${profitable?'ok':'bad'}">${pct>=0?'+':''}${pct.toFixed(3)}%</span></div>
     ${profitable?'<div class="good">✅ Ruta rentable. El ciclo genera ganancia después de la comisión.</div>':'<div class="warn">⛔ Ruta NO rentable. La comisión o el spread se comen la ganancia.</div>'}
   </div>`;
@@ -413,13 +418,13 @@ function calc(){
   if(profitable&&reached){
     const totalMin=cycles*mins, dias=totalMin/1440;
     html+=`<div class="card">
-      <h2>Ciclos hasta ${fmt(target,2)} USDT</h2>
+      <h2>Ciclos hasta llegar a tu meta (${fmt(target,2)} USDT)</h2>
       <div class="big ok">${cycles.toLocaleString("es-VE")} ciclos</div>
       <div class="row"><span>Capital inicial</span><span>${fmt(capU)} USDT</span></div>
-      <div class="row"><span>Tiempo estimado</span><span>${dias<1?fmt(totalMin/60,1)+' h':fmt(dias,1)+' días'}</span></div>
+      <div class="row"><span>Tiempo estimado</span><span>${dias<1?fmt(totalMin/60,1)+' horas':fmt(dias,1)+' días'}</span></div>
     </div>`;
   } else if(profitable && target > 0){
-    html+=`<div class="card"><div class="warn">Con este margen no se alcanza la meta en 200.000 ciclos.</div></div>`;
+    html+=`<div class="card"><div class="warn">Con este margen no se alcanza la meta en 200.000 ciclos. Intenta bajar los minutos o subir el margen.</div></div>`;
   }
 
   html+=`<div class="card">
