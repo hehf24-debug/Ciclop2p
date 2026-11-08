@@ -57,7 +57,8 @@
   .toggle button{flex:1;background:#0d0f13;border:1px solid var(--line);color:var(--mut);padding:9px;border-radius:9px;font-size:.8rem;cursor:pointer;}
   .toggle button.on{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600;}
   
-  .btn{width:100%;background:var(--acc);border:none;color:#fff;padding:14px;border-radius:11px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:6px;}
+  .btn{width:100%;background:var(--acc);border:none;color:#fff;padding:14px;border-radius:11px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:6px; transition: opacity 0.2s;}
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-add{background:#2a2e39;color:#fff;margin-top:0;display:flex; justify-content:center; align-items:center;}
   .btn-auto{background:linear-gradient(90deg, #10b981, #059669); margin-bottom: 12px; display:flex; justify-content:center; align-items:center; gap:8px;}
   .btn-clear{background:transparent; color:var(--bad); border: 1px solid var(--bad); font-size: 0.8rem; padding: 8px; margin-top: 15px;}
@@ -74,9 +75,11 @@
   td{padding:6px 4px;border-bottom:1px solid #1e2229;font-variant-numeric:tabular-nums;}
   footer{text-align:center;color:var(--mut);font-size:.72rem;padding:18px 0 26px;}
   footer a{color:var(--acc);text-decoration:none;}
-  .card-pro { border: 1px solid var(--pro); background: linear-gradient(180deg, #181b22 0%, #1c1a2e 100%); }
+  .card-pro { border: 1px solid var(--pro); background: linear-gradient(180deg, #181b22 0%, #1c1a2e 100%); margin-top: 20px;}
   .card-pro h2 { color: #a78bfa; }
   .btn-pro { background: var(--pro); }
+  
+  .limit-text { font-size: 0.75rem; text-align: center; color: #fbbf24; margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -100,7 +103,6 @@
       <button id="tLocal">Tengo Moneda Local</button>
     </div>
     
-    <!-- NUEVO SELECTOR DE MONEDA -->
     <div style="margin-bottom: 10px; display: none;" id="currencyContainer">
       <label>Selecciona tu moneda local</label>
       <select id="currencySelect" class="network-select" style="margin-bottom:0;">
@@ -122,7 +124,7 @@
     <div style="margin-top: 15px;">
       <div class="info-box">
         <strong>💡 ¿Qué es la "Comisión de Retiro"?</strong>
-        Es el costo que te cobra el exchange por enviar tus USDT a otra plataforma. Depende de la red que uses: TRC20 (Tron) suele costar ~1.5 USDT, mientras que BEP20 (BNB Chain) es más barato (~0.01 USDT). Esta comisión se resta de tu ganancia.
+        Es el costo que te cobra el exchange por enviar tus USDT a otra plataforma. Depende de la red que uses: TRC20 (Tron) suele costar ~1.5 USDT, mientras que BEP20 (BNB Chain) es más barato (~0.01 USDT).
       </div>
       
       <label style="margin-top: 10px;">Selecciona la red para ajustar la comisión:</label>
@@ -138,21 +140,23 @@
 
   <div class="card">
     <h2>Tus Exchanges (<span id="localCurrencyText">Bs</span> por USDT)</h2>
-    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas de Binance (Solo VES)</button>
-    <p class="hint">💡 Selecciona tu exchange y escribe las tasas que ves en tu app en este momento.</p>
+    
+    <!-- BOTÓN AUTOMÁTICO CON CONTADOR -->
+    <button class="btn btn-auto" id="autoBtn">🔄 Traer tasas de Binance</button>
+    <p class="limit-text" id="limitMsg">Consultas gratis este mes: 50/50</p>
+    
+    <p class="hint">💡 Selecciona tu exchange de la lista y escribe las tasas manualmente si lo prefieres.</p>
     <div id="exchs"></div>
     <button class="btn btn-add" id="addExchBtn">+ Añadir otro exchange</button>
   </div>
 
   <div class="card">
     <h2>Meta</h2>
-    <!-- NUEVA EXPLICACIÓN DE META -->
     <div class="info-box" style="border-left-color: var(--pro);">
       <strong>🎯 ¿Para qué sirve esta sección?</strong>
       <b>1. Objetivo (USDT):</b> ¿Cuántos USDT quieres llegar a tener en total? (Ej: Si tienes 60 y quieres llegar a 100, tu meta es 100).<br><br>
-      <b>2. Tiempo por ciclo (min):</b> Un "ciclo" es el proceso completo de Comprar USDT en un exchange, transferirlo y Venderlo en el otro. ¿Cuántos minutos tardas en hacer esto en la vida real? (Ej: 15 min). La app usará esto para decirte cuántos días tardarás en llegar a tu meta.
+      <b>2. Tiempo por ciclo (min):</b> Un "ciclo" es Comprar, transferir y Vender. ¿Cuántos minutos tardas en hacer esto?
     </div>
-
     <div class="grid g2">
       <div><label>Objetivo (USDT)</label><input id="target" type="number" placeholder="Ej: 100" step="any" inputmode="decimal"></div>
       <div><label>Tiempo por ciclo (min)</label><input id="mins" type="number" placeholder="Ej: 15" step="any" inputmode="decimal"></div>
@@ -169,39 +173,70 @@
     </a>
   </div>
 
-  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v12)</span> · <a href="#" id="share">Compartir app</a></footer>
+  <footer>Hecho por <b>CicloP2P</b> <span style="color:#3b82f6;">(v13)</span> · <a href="#" id="share">Compartir app</a></footer>
 </div>
 
 <script>
-const KEY = "ciclop2p_v12"; 
+const KEY = "ciclop2p_v13"; 
+const LIMIT_KEY = "ciclop2p_fetch_limit";
+const MAX_FREE_FETCHES = 50; // Límite mensual gratis
 
-const EXCHANGES_POPULARES = [
-  "Binance", "Bitget", "Bybit", "OKX", "BingX", "MEXC", "KuCoin", "El Dorado", "Syklo", "Reserve", "Otro"
-];
+const EXCHANGES_POPULARES = ["Binance", "Bitget", "Bybit", "OKX", "BingX", "MEXC", "KuCoin", "El Dorado", "Syklo", "Reserve", "Otro"];
+const CURRENCIES = { VES: { symbol: "Bs", name: "Bolívares" }, COP: { symbol: "COP", name: "Pesos" }, ARS: { symbol: "ARS", name: "Pesos" }, MXN: { symbol: "MXN", name: "Pesos" }, CLP: { symbol: "CLP", name: "Pesos" }, PEN: { symbol: "S/", name: "Soles" }, USD: { symbol: "$", name: "Dólares" } };
 
-const CURRENCIES = {
-  VES: { symbol: "Bs", name: "Bolívares" },
-  COP: { symbol: "COP", name: "Pesos Colombianos" },
-  ARS: { symbol: "ARS", name: "Pesos Argentinos" },
-  MXN: { symbol: "MXN", name: "Pesos Mexicanos" },
-  CLP: { symbol: "CLP", name: "Pesos Chilenos" },
-  PEN: { symbol: "S/", name: "Soles" },
-  USD: { symbol: "$", name: "Dólares" }
-};
-
-let EX = [
-  { n: "Binance", c: "", v: "" },
-  { n: "Bitget", c: "", v: "" }
-];
+let EX = [{ n: "Binance", c: "", v: "" }, { n: "Bitget", c: "", v: "" }];
 let mode = "usdt";
 let localCurrency = "VES";
 let isPro = false; 
 const $ = id => document.getElementById(id);
 
+// --- LÓGICA DEL LÍMITE DE CONSULTAS ---
+let fetchCount = parseInt(localStorage.getItem(LIMIT_KEY) || "0");
+
+function updateLimitUI() {
+    const remaining = MAX_FREE_FETCHES - fetchCount;
+    const btn = $("autoBtn");
+    const msg = $("limitMsg");
+    
+    if (isPro) {
+        msg.textContent = "✨ Modo Pro Activado: Consultas ilimitadas";
+        msg.style.color = "#8b5cf6";
+        btn.disabled = false;
+        btn.innerHTML = "🔄 Traer tasas de Binance (Pro)";
+    } else if (remaining > 0) {
+        msg.textContent = `Consultas gratis este mes: ${remaining}/${MAX_FREE_FETCHES}`;
+        msg.style.color = "#fbbf24";
+        btn.disabled = false;
+        btn.innerHTML = "🔄 Traer tasas de Binance";
+    } else {
+        msg.textContent = "Límite de consultas gratis alcanzado. Apoya en Ko-fi para desbloquear más.";
+        msg.style.color = "#ef4444";
+        btn.disabled = true;
+        btn.innerHTML = "🔒 Límite alcanzado";
+    }
+}
+
+function unlockPro() {
+    const code = prompt("Has alcanzado el límite de consultas gratis.\n\nPara desbloquear consultas ilimitadas por 1 mes, apoya el proyecto en Ko-fi y obtén tu código.\n\nSi ya tienes tu código, ingrésalo aquí:");
+    
+    // Código de desbloqueo (puedes cambiarlo cada mes)
+    if (code === "CICLO_PRO_2024") { 
+        isPro = true;
+        fetchCount = 0;
+        localStorage.setItem(LIMIT_KEY, fetchCount);
+        localStorage.setItem("ciclop2p_ispro", "true");
+        alert("¡Código correcto! Consultas desbloqueadas.");
+        updateLimitUI();
+    } else if (code !== null) {
+        alert("Código incorrecto o expirado.");
+    }
+}
+
+// Comprobar si ya era Pro
+if (localStorage.getItem("ciclop2p_ispro") === "true") { isPro = true; }
+
 function updateUI() {
   const cur = CURRENCIES[localCurrency];
-  
-  // Actualizar textos según la moneda
   $("localCurrencyText").textContent = cur.symbol;
   if (mode === "local") {
     $("capLabel").textContent = `Capital inicial (${cur.symbol})`;
@@ -210,7 +245,7 @@ function updateUI() {
     $("capLabel").textContent = "Capital inicial (USDT)";
     $("currencyContainer").style.display = "none";
   }
-  
+  updateLimitUI();
   renderEx();
   save();
   calc();
@@ -230,9 +265,7 @@ function renderEx(){
         </select>
         ${EX.length > 2 ? `<button class="btn-remove" onclick="removeExchange(${i})">✕</button>` : ''}
       </div>
-      
       ${isCustom ? `<input type="text" class="nm-custom" value="${e.n === 'Otro' ? '' : e.n}" placeholder="Escribe el nombre..." oninput="EX[${i}].n=this.value; save(); calc();">` : ''}
-      
       <div class="grid g2">
         <div><label>Compra (pagas en ${curSymbol})</label><input type="number" step="any" inputmode="decimal" value="${e.c || ''}" placeholder="Ej: 1038.5" oninput="EX[${i}].c=+this.value; save(); calc();"></div>
         <div><label>Venta (recibes en ${curSymbol})</label><input type="number" step="any" inputmode="decimal" value="${e.v || ''}" placeholder="Ej: 1033" oninput="EX[${i}].v=+this.value; save(); calc();"></div>
@@ -242,17 +275,19 @@ function renderEx(){
 }
 
 function updateExName(index, value) {
-  if (value === "Otro") {
-    EX[index].n = ""; 
-  } else {
-    EX[index].n = value;
-  }
+  EX[index].n = value === "Otro" ? "" : value;
   save(); renderEx(); calc();
 }
 
+// --- CONEXIÓN A CLOUDFLARE PARA TRAER TASAS ---
 async function fetchBinanceRates() {
   if (localCurrency !== "VES") {
-    alert("El botón automático solo funciona para Venezuela (VES) por ahora. Para otras monedas, por favor ingresa los precios manualmente.");
+    alert("El botón automático solo funciona para Venezuela (VES) por ahora. Para otras monedas, ingresa los precios manualmente.");
+    return;
+  }
+
+  if (fetchCount >= MAX_FREE_FETCHES && !isPro) {
+    unlockPro();
     return;
   }
 
@@ -261,54 +296,65 @@ async function fetchBinanceRates() {
   btn.innerHTML = "⏳ Buscando...";
   btn.disabled = true;
 
-  const proxies = ["https://api.codetabs.com/v1/proxy?quest=", "https://api.allorigins.win/raw?url="];
-  let success = false;
-
-  for (let proxy of proxies) {
-    try {
-      const urlCompra = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=BUY");
-      const urlVenta = encodeURIComponent("https://www.binance.com/bapi/c2c/v1/public/c2c/agent/ad-list?fiat=VES&asset=USDT&tradeType=SELL");
-
-      const [resCompra, resVenta] = await Promise.all([fetch(proxy + urlCompra), fetch(proxy + urlVenta)]);
-      const dataCompra = await resCompra.json();
-      const dataVenta = await resVenta.json();
-
-      if (dataCompra && dataCompra.data && dataCompra.data.length > 0 && dataVenta && dataVenta.data && dataVenta.data.length > 0) {
-        let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
-        if (bIndex === -1) {
-          if(EX.length >= 2 && !isPro) { bIndex = 0; EX[bIndex].n = "Binance"; } 
-          else { EX.push({ n: "Binance", c: "", v: "" }); bIndex = EX.length - 1; }
+  try {
+    // Hacemos la petición a tu Worker en Cloudflare
+    const response = await fetch("https://conversor-proxy.hehf24.workers.dev/");
+    
+    if (!response.ok) throw new Error("Error de red");
+    
+    const data = await response.json();
+    
+    // Buscamos la tasa de Binance
+    const binanceRate = data.rates.find(r => r.market && r.market.toLowerCase().includes('binance'));
+    
+    if (binanceRate && binanceRate.ask) {
+      let bIndex = EX.findIndex(e => e.n.toLowerCase().includes("binance"));
+      
+      if (bIndex === -1) {
+        if(EX.length >= 2 && !isPro) { 
+          bIndex = 0; 
+          EX[bIndex].n = "Binance";
+        } else {
+          EX.push({ n: "Binance", c: "", v: "" });
+          bIndex = EX.length - 1;
         }
-        EX[bIndex].c = parseFloat(dataCompra.data[0].adv.price);
-        EX[bIndex].v = parseFloat(dataVenta.data[0].adv.price);
-        success = true; break; 
       }
-    } catch (error) {}
+      
+      // Cotizave nos da la tasa 'ask' (a cómo nos venden USDT)
+      EX[bIndex].c = parseFloat(binanceRate.ask);
+      // Para la venta, le restamos un pequeño margen (el mercado suele ser un 0.5% menor)
+      EX[bIndex].v = parseFloat(binanceRate.ask) * 0.995; 
+      
+      // Descontar consulta
+      fetchCount++;
+      localStorage.setItem(LIMIT_KEY, fetchCount);
+      
+      renderEx(); save(); calc();
+      updateLimitUI();
+      alert("✅ Tasas de Binance extraídas con éxito.");
+    } else {
+      throw new Error("No se encontró la tasa de Binance.");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("⚠️ No se pudo conectar. Ingresa los precios a mano.");
+  } finally {
+    btn.innerHTML = originalText;
+    updateLimitUI(); // Restaura el estado del botón
   }
-
-  if (success) {
-    renderEx(); save(); calc();
-    alert("✅ Tasas de Binance P2P extraídas.");
-  } else {
-    alert("⚠️ No se pudo conectar con Binance.\n\nNo te preocupes, escribe los precios a mano.");
-  }
-  btn.innerHTML = originalText; btn.disabled = false;
 }
 
 function addExchange() {
   if (EX.length >= 2 && !isPro) {
-    const code = prompt("Límite de 2 exchanges (Gratis).\n\nApoya el proyecto en Ko-fi para obtener tu código Pro.\n\nSi ya tienes tu código, ingrésalo aquí:");
-    if (code === "CICLO2024") { isPro = true; alert("¡Código correcto! Bienvenido a la Versión Pro."); } 
-    else { alert("Código incorrecto o cancelado."); return; }
+    unlockPro(); // Reutilizamos el sistema Pro para limitar exchanges
+    return;
   }
   if (EX.length >= 5) { alert("Máximo 5 exchanges."); return; }
   EX.push({ n: "Otro", c: "", v: "" });
   renderEx(); save(); calc();
 }
 
-function removeExchange(index) {
-  EX.splice(index, 1); renderEx(); save(); calc();
-}
+function removeExchange(index) { EX.splice(index, 1); renderEx(); save(); calc(); }
 
 function clearAll() {
   if(confirm("¿Seguro que quieres borrar todos los datos?")) {
@@ -350,9 +396,8 @@ $("autoBtn").onclick = fetchBinanceRates;
 $("clearBtn").onclick = clearAll;
 
 $("networkSelect").addEventListener("change", function() {
-  const feeInput = $("fee");
   const selectedValue = parseFloat(this.value);
-  if (!isNaN(selectedValue)) { feeInput.value = selectedValue; } else { feeInput.value = 1.5; }
+  $("fee").value = !isNaN(selectedValue) ? selectedValue : 1.5;
   save(); calc();
 });
 
@@ -365,12 +410,8 @@ function calc(){
   const validEX = EX.filter(e => e.c > 0 && e.v > 0 && e.n.trim() !== "");
   const curSymbol = CURRENCIES[localCurrency].symbol;
 
-  if(!(cap>0)){
-    out.innerHTML='<div class="card"><div class="warn">Por favor, ingresa tu capital inicial arriba.</div></div>';
-    return;
-  }
-  if(validEX.length < 2){
-    out.innerHTML='<div class="card"><div class="warn">Necesitas llenar los precios de al menos 2 exchanges.</div></div>';
+  if(!(cap>0) || validEX.length < 2){
+    out.innerHTML='<div class="card"><div class="warn">Ingresa tu capital y llena al menos 2 exchanges para calcular.</div></div>';
     return;
   }
 
@@ -412,19 +453,19 @@ function calc(){
     <div class="row"><span>Capital tras 1 ciclo</span><span>${fmt(first)} ${displayU}</span></div>
     <div class="row"><span>Ganancia neta 1 ciclo</span><span class="${profitable?'ok':'bad'}">${profit>=0?'+':''}${fmt(profit)} ${displayU}</span></div>
     <div class="row"><span>Rentabilidad neta</span><span class="${profitable?'ok':'bad'}">${pct>=0?'+':''}${pct.toFixed(3)}%</span></div>
-    ${profitable?'<div class="good">✅ Ruta rentable. El ciclo genera ganancia después de la comisión.</div>':'<div class="warn">⛔ Ruta NO rentable. La comisión o el spread se comen la ganancia.</div>'}
+    ${profitable?'<div class="good">✅ Ruta rentable.</div>':'<div class="warn">⛔ Ruta NO rentable. La comisión se come la ganancia.</div>'}
   </div>`;
 
   if(profitable&&reached){
     const totalMin=cycles*mins, dias=totalMin/1440;
     html+=`<div class="card">
-      <h2>Ciclos hasta llegar a tu meta (${fmt(target,2)} USDT)</h2>
+      <h2>Ciclos hasta tu meta (${fmt(target,2)} USDT)</h2>
       <div class="big ok">${cycles.toLocaleString("es-VE")} ciclos</div>
       <div class="row"><span>Capital inicial</span><span>${fmt(capU)} USDT</span></div>
       <div class="row"><span>Tiempo estimado</span><span>${dias<1?fmt(totalMin/60,1)+' horas':fmt(dias,1)+' días'}</span></div>
     </div>`;
   } else if(profitable && target > 0){
-    html+=`<div class="card"><div class="warn">Con este margen no se alcanza la meta en 200.000 ciclos. Intenta bajar los minutos o subir el margen.</div></div>`;
+    html+=`<div class="card"><div class="warn">Con este margen no se alcanza la meta. Sube los minutos o el margen.</div></div>`;
   }
 
   html+=`<div class="card">
@@ -434,14 +475,6 @@ function calc(){
     </tbody></table>
   </div>`;
 
-  if (!isPro) {
-    html += `<div class="card card-pro">
-      <h2>💎 Desbloquea la Versión Pro</h2>
-      <p style="font-size:0.8rem; color:#9ca3af; margin-bottom:12px;">
-        Has comparado ${validEX.length} exchanges. Si quieres añadir más plataformas simultáneamente, apóyanos en Ko-fi para obtener tu código de desbloqueo.
-      </p>
-    </div>`;
-  }
   out.innerHTML=html;
 }
 
@@ -463,4 +496,4 @@ if("serviceWorker" in navigator){
 }
 </script>
 </body>
-</html> 
+</html>
